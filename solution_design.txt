@@ -1,0 +1,122 @@
+# Solution Design for 3D Vision Coding Challenge
+
+## Understanding the Problem
+
+The task involves finding corresponding pixels between two rectified RGB images (Image A and Image B) using provided depth maps and camera parameters. Specifically, for every pixel in Image A, we need to determine:
+
+1. **Visibility**: Whether the pixel is visible in Image B.
+2. **Correspondence**: The exact coordinates of the corresponding pixel in Image B, if visible.
+
+### Provided Data:
+- **RGB Images**: Standard RGB color images.
+- **Depth Maps**: Pixel-wise depth information (metric distances from the camera).
+- **Camera Parameters**:
+  - Intrinsics: Camera field of view (FOV).
+  - Extrinsics: Camera poses including position and rotation (quaternion).
+
+### Camera Coordinate System:
+- Right-handed coordinate system:
+  - X-axis points right (red)
+  - Y-axis points upward (green)
+  - Z-axis points into the scene (negative blue)
+
+## Setup and Installation
+
+Create a new conda environment and install necessary packages:
+
+```bash
+conda create -n vision3d python=3.10
+conda activate vision3d
+pip install numpy matplotlib open3d roma pillow pandas torch
+```
+
+## High-Level Approach
+
+The solution consists of the following high-level steps:
+
+0. **Load, Preprocess and Visualize, and Understand the Data**:
+   - Load the images and depth maps.
+   - Visualize the images and depth maps.
+   - Understand the camera parameters.
+
+1. **Convert Depth to 3D Points**:
+   - Use camera intrinsics (field of view and image dimensions) to construct a projection matrix.
+   - Compute 3D coordinates for each pixel in Image A.
+
+2. **Transform Points to World Coordinates**:
+   - Convert points from Image A's camera coordinate system into world coordinates using Image A’s extrinsics (position and quaternion rotation).
+
+3. **Transform Points from World to Image B’s Coordinates**:
+   - Transform world coordinate points into Image B’s coordinate system using Image B’s inverse extrinsics.
+
+4. **Project Points onto Image B Plane**:
+   - Project transformed points onto Image B’s 2D image plane using perspective projection formulas derived from intrinsics.
+
+5. **Check Visibility and Correspondence**:
+   - Validate projected points are within Image B's image boundaries.
+   - Check for occlusions by comparing depth values from transformed points against Image B’s depth map.
+
+6. **Visualization**:
+   - Generate visualizations color-coded based on polar coordinates in Image A.
+
+## Detailed Technical Solution Steps
+
+### Step 1: Depth to 3D Point Cloud Conversion
+- Generate pixel grids (u, v) for Image A.
+- Compute intrinsic parameters:
+  \[
+  f_x = \frac{W}{2\tan(\frac{\text{FOV}_h}{2})}, \quad f_y = \frac{H}{2\tan(\frac{\text{FOV}_v}{2})}
+  \]
+- Convert pixel coordinates to normalized camera coordinates:
+  \[
+  X = \frac{(u - c_x) \cdot Z}{f_x}, \quad Y = \frac{(v - c_y) \cdot Z}{f_y}, \quad Z = \text{depth}(u,v)
+  \]
+
+### Step 2: Camera A to World Coordinate Transformation
+- Construct homogeneous transformation matrix \(T_A\) from quaternion rotation \(q_A\) and translation \(t_A\).
+- Transform 3D points:
+  \[
+  P_{\text{world}} = T_A \cdot P_{\text{camera A}}
+  \]
+
+### Step 3: World to Camera B Transformation
+- Construct inverse transformation matrix \(T_B^{-1}\) from camera B's extrinsics.
+- Transform points:
+  \[
+  P_{\text{camera B}} = T_B^{-1} \cdot P_{\text{world}}
+  \]
+
+### Step 4: Projection onto Image B Plane
+- Apply perspective projection:
+  \[
+  u' = f_x \frac{X}{Z} + c_x, \quad v' = f_y \frac{Y}{Z} + c_y
+  \]
+
+### Step 5: Visibility Check and Occlusion Handling
+- Check projected pixel coordinates lie within Image B's dimensions.
+- Check depth consistency:
+  \[
+  |Z_{\text{projected}} - Z_{\text{Image B}}| < \text{threshold}
+  \]
+
+### Step 6: Visualization
+- Visualize using polar-coordinate-based color mapping as specified.
+
+## Performance Considerations
+- Employ batch processing via PyTorch or NumPy for efficient computation.
+- Aim for optimized vectorized operations to meet the runtime criteria (< 10s per image pair).
+
+## Recommended Libraries and Tools
+- **PyTorch/NumPy**: Efficient tensor operations and batch processing.
+- **Roma**: Quaternion-based rotations.
+- **Open3D**: Visualization and debugging.
+- **Matplotlib**: Visualization of pixel correspondences.
+
+## Validation and Debugging
+- Use Open3D to visualize intermediate steps:
+  - Initial and transformed point clouds.
+  - Camera positions and orientations.
+- Utilize provided utility functions for detailed debugging and verification of geometric transformations.
+
+By following these detailed technical steps and clear setup instructions, even junior engineers can effectively implement the described solution.
+
