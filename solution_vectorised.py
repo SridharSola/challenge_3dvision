@@ -24,9 +24,9 @@ def create_point_cloud(depth_map, color_img, fov_deg, T=None):
         colors: NxDx3 array of colors normalized to [0,1]
         where D is H*W, num of pixels in the image
     """
-    # Convert inputs to torch tensors if they aren't already
+    # Convert inputs to torch tensors 
     if not isinstance(depth_map, torch.Tensor):
-        depth_map = torch.from_numpy(depth_map).float()  # Convert to float32
+        depth_map = torch.from_numpy(depth_map).float()  # float32
     if not isinstance(color_img, torch.Tensor):
         color_img = torch.from_numpy(color_img).float()  
     if not isinstance(fov_deg, torch.Tensor):
@@ -34,21 +34,21 @@ def create_point_cloud(depth_map, color_img, fov_deg, T=None):
     
     n, h, w = depth_map.shape
     
-    # Create pixel coordinate grid
+    # pixel coordinate grid (N,H,W)
     ys, xs = torch.meshgrid(torch.arange(h, dtype=torch.float32), 
                            torch.arange(w, dtype=torch.float32), 
                            indexing='ij')
     
-    # Convert to normalized image coordinates
+    # principal point
     cx, cy = w/2, h/2
-    # Convert fov_deg to (N,1,1) for broadcasting
+    # convert fov_deg to focal lengths (N,1,1) for broadcasting
     fx = (cx / torch.tan(torch.deg2rad(fov_deg/2)))[:, None, None]
     fy = fx
     
     # Expand xs and ys for broadcasting
     xs = xs[None, ...]  # (1,H,W)
     ys = ys[None, ...]  # (1,H,W)
-    
+    # 3d points in camera coordinates
     xs = (xs - cx) / fx
     ys = -(ys - cy) / fy
     
@@ -108,12 +108,11 @@ def project_points_to_image(points_3d, fov_deg, img_shape):
     # Initialize projections
     points_2d = torch.zeros((*points_3d.shape[:-1], 2), dtype=torch.float32)  # (N,D,2)
     
-    # Compute normalized coordinates for all points
-    # Safe division - will be masked by valid_mask later
+    # normalize points
     points_normalized = points_3d[..., :2] / (-points_3d[..., 2:])  # (N,D,2)
     
-    # Project all points and mask invalid ones later
-    points_2d[..., 0] = points_normalized[..., 0] * fx + cx  # X remains same direction
+    # need to mask invalid ones later
+    points_2d[..., 0] = points_normalized[..., 0] * fx + cx  # X remains same dir
     points_2d[..., 1] = h - (points_normalized[..., 1] * fy + cy)  # Y flipped
     
     # Mask invalid projections
@@ -156,17 +155,15 @@ def check_visibility(points_3d, depth_maps, fov_deg, img_shape, depth_threshold=
             px_valid = px[b, in_bounds[b]]  # (M,)
             py_valid = py[b, in_bounds[b]]  # (M,)
             
-            # Get depth values from depth map
+            # depth value and compare
             depth_vals = depth_maps[b, py_valid, px_valid]  # (M,)
-            
-            # Compare with point depths
             point_depths = -points_3d[b, in_bounds[b], 2]  # (M,)
             depth_diff = torch.abs(depth_vals - point_depths)
             
-            # Points are visible if their depth matches the depth map
+            # visible if their depth matches the depth map
             matches = depth_diff < depth_threshold
             
-            # Update visibility mask
+            # update
             visible[b, in_bounds[b]] = matches
     
     return visible.numpy()
@@ -280,13 +277,13 @@ def find_pixel_correspondences_batch(idx_pairs, visualize_steps=False):
     
     # Convert inputs to torch tensors
     depths_0 = torch.from_numpy(depths_0).float()
-    imgs_0 = torch.from_numpy(imgs_0).float()  # Keep as uint8 for now
+    imgs_0 = torch.from_numpy(imgs_0).float()  #  uint8 for now
     depths_1 = torch.from_numpy(depths_1).float()
-    imgs_1 = torch.from_numpy(imgs_1).float()  # Keep as uint8 for now
+    imgs_1 = torch.from_numpy(imgs_1).float()  #  uint8 for now
     fov_0 = torch.from_numpy(fov_0).float()
     fov_1 = torch.from_numpy(fov_1).float()
     
-    # Create transformation matrices
+    # Init transformation matrices
     T_0 = torch.tile(torch.eye(4, dtype=torch.float32), (batch_size,1,1))
     T_0[...,:3,3] = torch.from_numpy(pos_0).float()
     R_0 = roma.unitquat_to_rotmat(torch.from_numpy(rot_0).float())
@@ -297,31 +294,31 @@ def find_pixel_correspondences_batch(idx_pairs, visualize_steps=False):
     R_1 = roma.unitquat_to_rotmat(torch.from_numpy(rot_1).float())
     T_1[...,:3,:3] = R_1
     
-    # Create point clouds and transform points in batch
+    # Step 1: Convert depth to 3d points
+    # + Step 2: Transform points from Camera A to world coordinates
     points_cam_a, colors_a = create_point_cloud(depths_0, imgs_0, fov_0, T_0)
     points_cam_a = torch.from_numpy(points_cam_a)
     
-    # Transform points from Camera A to Camera B in batch
+    # Step 3: Transform points from Camera A to Camera B in batch
     T_1_inv = torch.inverse(T_1)
     points_cam_a_h = torch.cat([
         points_cam_a, 
         torch.ones((batch_size, points_cam_a.shape[1], 1))
     ], dim=-1)
     
-    # Transform points using batch matrix multiplication
+    # Step 4: Project points onto Image B plane
     points_cam_b = torch.matmul(T_1_inv, points_cam_a_h.transpose(-2,-1))
     points_cam_b = points_cam_b.transpose(-2,-1)
     points_cam_b = points_cam_b[..., :3] / points_cam_b[..., 3:]
-    
-    # Convert back to numpy only at the end
+    # need to convert back to numpy
     points_cam_b = points_cam_b.numpy()
     
-    # Process each batch for visibility and occlusion checks
+    # Step 5: visibility and occlusion checks
     ps_0_list = []
     ps_1_list = []
     
     for b in range(batch_size):
-        # Project and check visibility/occlusions
+        # Project and check visibility+occlusions
         points_img_b = project_points_to_image(points_cam_b[b:b+1], fov_1[b:b+1], imgs_1[b].shape[:2])[0][0]
         visible = check_visibility(points_cam_b[b:b+1], depths_1[b:b+1], fov_1[b:b+1], imgs_1[b].shape[:2])[0]
         

@@ -141,55 +141,6 @@ def check_visibility(points_3d, depth_map, fov_deg, img_shape, depth_threshold=0
     
     return visible
 
-def check_occlusions(points_3d, depth_map, fov_deg, img_shape, depth_threshold=0.1):
-    """Check which points are occluded in the target view.
-    
-    Args:
-        points_3d: (N, 3) array of points in target camera coordinates
-        depth_map: (H, W) depth map of target view
-        fov_deg: field of view in degrees
-        img_shape: (height, width) of target image
-        depth_threshold: tolerance for depth comparison
-        
-    Returns:
-        (N,) boolean array, True for non-occluded points
-    """
-    # Project points to get pixel coordinates
-    points_2d, valid = project_points_to_image(points_3d, fov_deg, img_shape)
-    
-    # init all points as occluded
-    not_occluded = np.zeros(len(points_3d), dtype=bool)
-    
-    if np.any(valid):
-        # Get integer pixel coordinates
-        px = np.round(points_2d[valid, 0]).astype(int)
-        py = np.round(points_2d[valid, 1]).astype(int)
-        
-        # Filter points within image bounds
-        in_bounds = (
-            (px >= 0) & (px < img_shape[1]) &
-            (py >= 0) & (py < img_shape[0])
-        )
-        
-        if np.any(in_bounds):
-            # Get depth values from depth map
-            px_valid = px[in_bounds]
-            py_valid = py[in_bounds]
-            depth_map_values = depth_map[py_valid, px_valid]
-            
-            # Get depths of projected points (negative because Z points into scene)
-            point_depths = -points_3d[valid][in_bounds, 2]
-            
-            # Points are not occluded if they are close to the depth map value
-            # and not significantly behind it
-            depth_diff = point_depths - depth_map_values
-            not_occluded_points = (np.abs(depth_diff) < depth_threshold) | (depth_diff < 0)
-            
-            # Update visibility mask
-            valid_idx = np.where(valid)[0][in_bounds]
-            not_occluded[valid_idx[not_occluded_points]] = True
-    
-    return not_occluded
 
 def find_pixel_correspondences(idx_0: int, idx_1: int, visualize_steps: bool = False):
     """
@@ -270,15 +221,13 @@ def find_pixel_correspondences(idx_0: int, idx_1: int, visualize_steps: bool = F
     # Step 3: Project points onto Image B plane
     points_img_b, valid_b = project_points_to_image(points_cam_b, meta_1.cam_fov, img_1.shape[:2])
 
-    # Step 4: Check visibility and occlusions in Image B
+    # Step 4: Check visibility in Image B
     visible_in_b = check_visibility(points_cam_b, depth_1, meta_1.cam_fov, img_1.shape[:2], depth_threshold=0.1)
-    not_occluded = check_occlusions(points_cam_b, depth_1, meta_1.cam_fov, img_1.shape[:2], depth_threshold=0.1)
 
-    # Combined validity mask including occlusion check
+    # Combined validity mask
     valid_points = (
         valid_b &
         visible_in_b &
-        not_occluded &  # Add occlusion check
         (points_img_b[:, 0] >= 0) & (points_img_b[:, 0] < img_1.shape[1]) &
         (points_img_b[:, 1] >= 0) & (points_img_b[:, 1] < img_1.shape[0])
     )
