@@ -44,8 +44,8 @@ This implementation achieves:
 - Proper occlusion handling
 ![Occlusion Handling](results/result_2.jpg)
 - Real-time capable processing
-Part-vectorised implementation: ~1.2s for whole sample dataset
-Fully vectorised implementation: ~0.04s for whole sample dataset
+-- Part-vectorised implementation: ~1.2s for whole sample dataset
+-- Fully vectorised implementation: ~0.04s for whole sample dataset
 
 ## Usage
 
@@ -59,7 +59,8 @@ conda install -c conda-forge open3d
 
 Run:
 ```bash
-python solution.py
+python challenge.py # part-vectorised implementation with numpy
+python solution_vectorised.py # fully vectorised implementation with torch
 ```
 
 - Use `--visualize` to visualize intermediate steps like images, depth maps, and 3D point clouds.
@@ -81,9 +82,4 @@ python test_vectorised.py
 
 ---
 
-## Limitations
-- **Single-pair logic**: The code processes image pairs sequentially. It could be extended to batch inference with PyTorch if camera intrinsics and image dimensions were consistent.
-- **Depth noise sensitivity**: Occlusion checking relies on depth thresholds and may miss fine occlusion edges. A multi-pass Z-buffer approach could be more robust.
-- **FOV assumption**: The intrinsics are computed assuming symmetric FOV and square pixels. This works here but would not generalize to skewed intrinsics or asymmetric sensors.
-- **No error metrics**: Currently, the code produces visual validation but no quantitative re-projection error or coverage metrics.
 
