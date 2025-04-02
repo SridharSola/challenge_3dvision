@@ -41,13 +41,13 @@ Given a pair of images A and B,
 Image results are saved in `results/`. `vec_result_[idx].jpg` are corresponding vectorised implementation results.
 
 This implementation achieves:
-### Clear correspondence maps
+### Correspondence maps
 ![Correspondence Map](results/result_3.jpg)
-### Proper occlusion handling
+### Occlusion handling
 ![Occlusion Handling](results/result_2.jpg)
-### Real-time capable processing
+### Real-time processing
 - Part-vectorised implementation: ~1.2s for whole sample dataset
-- Fully vectorised implementation: ~0.04s for whole sample dataset
+- Batch vectorised implementation: ~0.04s for whole sample dataset
 
 ## Usage
 
@@ -62,11 +62,11 @@ conda install -c conda-forge open3d
 Run:
 ```bash
 python challenge.py # part-vectorised implementation with numpy
-python solution_vectorised.py # fully vectorised implementation with torch
+python solution_vectorised.py # fbatch vectorised implementation with torch
 ```
 
 - Use `--visualize` to visualize intermediate steps like images, depth maps, and 3D point clouds.
-- Use `--vectorised` to use the fastervectorised implementation.
+- Use `--depth_threshold` to set threshold for occlusion and visibility checking
 
 To run tests:
 ```bash
