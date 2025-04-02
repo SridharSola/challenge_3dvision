@@ -213,14 +213,6 @@ def generate(idx, visualize_steps=False):
     img_1, depth_1 = load_rgb_depth(idx[1])
     # depth is now metric distance for each pixel
 
-    if visualize_steps:
-        fig, axs = plt.subplots(2, 2, layout="constrained", figsize=(8, 4))
-        axs[0][0].imshow(img_0)
-        axs[0][1].imshow(depth_0)
-        axs[1][0].imshow(img_1)
-        axs[1][1].imshow(depth_1)
-        plt.show()
-
     pos_0, rot_0 = get_pos_rot(meta_0)
     pos_1, rot_1 = get_pos_rot(meta_1)
     # pos is x, y, z; rot is quaternion x, y, z, w
@@ -234,7 +226,8 @@ def generate(idx, visualize_steps=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--visualize", default=False, help="Show intermediate visualization steps")
+    parser.add_argument("--visualize", action="store_true", help="Show intermediate visualization steps")
+    parser.add_argument("--vectorised", action="store_true", help="Use faster vectorised implementation")
     args = parser.parse_args()
 
     sample_idxs = np.array([
@@ -265,6 +258,6 @@ if __name__ == "__main__":
     
     # Visualize results
     for i in range(len(sample_idxs)):
-        visualize(f"result_{i}.jpg", imgs_0[i], imgs_1[i], ps_0_list[i], ps_1_list[i], visualize_steps=args.visualize)
+        visualize(f"results/result_{i}.jpg", imgs_0[i], imgs_1[i], ps_0_list[i], ps_1_list[i], visualize_steps=args.visualize)
     
     

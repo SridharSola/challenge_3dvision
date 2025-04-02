@@ -364,7 +364,7 @@ def main():
     # Visualize results
     for i in range(len(idx_pairs)):
         from challenge import visualize
-        visualize(f"test_result_{i}.jpg", imgs_0[i], imgs_1[i], ps_0_list[i], ps_1_list[i])
+        visualize(f"results/vec_result_{i}.jpg", imgs_0[i], imgs_1[i], ps_0_list[i], ps_1_list[i])
     
 if __name__ == "__main__":
     main()
