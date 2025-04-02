@@ -118,5 +118,3 @@ The solution consists of the following high-level steps:
   - Camera positions and orientations.
 - Utilize provided utility functions for detailed debugging and verification of geometric transformations.
 
-By following these detailed technical steps and clear setup instructions, even junior engineers can effectively implement the described solution.
-
