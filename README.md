@@ -38,7 +38,7 @@ Given a pair of images A and B,
 
 ## Results
 
-Image results are saved in `results/`. `test_result_[idx].jpg` are corresponding vectorised implementation results.
+Image results are saved in `results/`. `vec_result_[idx].jpg` are corresponding vectorised implementation results.
 
 This implementation achieves:
 ### Clear correspondence maps
