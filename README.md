@@ -40,9 +40,9 @@ Given a pair of images A and B,
 
 This implementation achieves:
 - Clear correspondence maps
-![Correspondence Map](result_3.jpg)
+![Correspondence Map](results/result_3.jpg)
 - Proper occlusion handling
-![Occlusion Handling](result_2.jpg)
+![Occlusion Handling](results/result_2.jpg)
 - Real-time capable processing
 Part-vectorised implementation: ~1.2s for whole sample dataset
 Fully vectorised implementation: ~0.04s for whole sample dataset
