@@ -335,7 +335,7 @@ def find_pixel_correspondences_batch(idx_pairs, visualize_steps=False):
         ps_0_list.append(pixels_a[valid_points].astype(np.int32))
         ps_1_list.append(points_img_b[valid_points].astype(np.int32))
     
-    # Convert back to uint8 for visualization
+    # Convert back to uint8 for saving
     return (imgs_0.numpy().astype(np.uint8), 
             ps_0_list, 
             imgs_1.numpy().astype(np.uint8), 
@@ -343,7 +343,7 @@ def find_pixel_correspondences_batch(idx_pairs, visualize_steps=False):
 
 def main():
     """Main function to test the implementation."""
-    # Test with multiple image pairs at once
+    # whole sample dataset
     idx_pairs = np.array([
         [2, 4],
         [6, 9],
@@ -358,7 +358,7 @@ def main():
     end_time = time.time()
     print(f"Time taken: {end_time - start_time} seconds")
     
-    # Visualize results
+    # Save results
     for i in range(len(idx_pairs)):
         from challenge import visualize
         visualize(f"results/vec_result_{i}.jpg", imgs_0[i], imgs_1[i], ps_0_list[i], ps_1_list[i])
