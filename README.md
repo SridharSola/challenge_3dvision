@@ -5,16 +5,14 @@ Implementation for finding pixel correspondences between rectified RGB-D image p
 ## Problem Statement
 
 Given a pair of rectified RGB images with corresponding depth maps and camera parameters (intrinsics and extrinsics), determine:
-1. For each pixel in Image A, whether it is visible in Image B, accounting for:
-   - Camera frustum boundaries
-   - Occlusion handling via depth comparison
-2. For visible pixels, compute their precise corresponding coordinates in Image B
+1. For each pixel in Image A, whether it is visible in Image B, 
+2. For visible pixels, compute their precise corresponding coordinates in Image B.
 
 ### Input Data
 - RGB Images 
 - Depth Maps (image, with metric conversion metadata)
 - Camera Parameters:
-  - Intrinsics: Horizontal field of view (degrees)
+  - Intrinsics: Horizontal field of view (degrees ?)
   - Extrinsics: Position (x,y,z) and orientation (quaternion x,y,z,w)
 Data is in right-handed coordinate system (X-right, Y-up, Z-into-scene)
 
